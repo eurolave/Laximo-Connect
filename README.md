@@ -1,40 +1,35 @@
-# Laximo PHP Microservice (GuayaquilLib)
+# Laximo PHP Microservice — GitHub-Ready (PHP 8.2, Railway)
 
-Мини-сервис на PHP поверх **laximo/guayaquillib** (CAT/DOC), для вызова из Node/Telegram бота.
+Готовая структура для заливки в GitHub и деплоя на Railway.
 
-## Эндпоинты
-- `GET /health`
-- `GET /cat/findVehicle?vin=WAUZZZ...` → `{ vehicleid, ssd, catalog, brand, name, raw }`
-- `GET /cat/listUnits?catalog=TOYOTA00&ssd=$...&category=0&group=1` → `{ assemblies: [...], raw }`
-- `GET /cat/listDetailByUnit?catalog=TOYOTA00&ssd=$...&unitid=3423` → `{ items: [...], raw }`
-- `GET /doc/partByOem?oem=C110&brand=VIC` → `{ oem, brand, name, raw }`
-- `GET /doc/crosses?oem=C110` → `{ crosses: [...], raw }`
-
-## Переменные окружения
-- `LAXIMO_LOGIN`, `LAXIMO_PASSWORD` — учётные данные Laximo
+## Что уже сделано
+- Обновлён `composer.json`: `"php": "^8.2"`, сохранены `ext-soap`, `ext-simplexml`, `laximo/guayaquillib`.
+- Старт использует порт из `$PORT` (Railway): `php -S 0.0.0.0:$PORT -t public public/index.php`.
+- Добавлен `Procfile` (на случай автодетекта).
+- Добавлен минимальный роутер `public/index.php` (health-check и `/api`). Замените на свою логику.
 
 ## Локальный запуск
 ```bash
 composer install
-php -S 0.0.0.0:8080 -t public
-# http://localhost:8080/health
+composer run start
+# или вручную:
+# PORT=8080 php -S 0.0.0.0:$PORT -t public public/index.php
 ```
 
-## Railway
-- Создайте новый проект и загрузите ZIP.
-- **Start Command:** `php -S 0.0.0.0:$PORT -t public`
-- Добавьте переменные в **Variables**: `LAXIMO_LOGIN`, `LAXIMO_PASSWORD`.
-- После деплоя — `https://<app>.up.railway.app/health`.
+## Заливка в GitHub
+```bash
+git init
+git add .
+git commit -m "Initial: PHP 8.2 + Railway ready"
+git branch -M main
+git remote add origin <URL_репозитория>
+git push -u origin main
+```
 
-## Подключение Node-бота
-В Node поставьте:
-```
-LAXIMO_BASE_URL=https://<ваш-php-сервис>.up.railway.app
-LAXIMO_PATH_FINDVEHICLE=/cat/findVehicle
-LAXIMO_PATH_LIST_UNITS=/cat/listUnits
-LAXIMO_PATH_LIST_PARTS=/cat/listDetailByUnit
-LAXIMO_PATH_PART_BY_OEM=/doc/partByOem
-LAXIMO_PATH_CROSSES_BY_OEM=/doc/crosses
-LAXIMO_DEFAULT_CATEGORY=0
-LAXIMO_DEFAULT_GROUP=1
-```
+## Деплой на Railway
+1. Railway → **New Project → Deploy from GitHub Repo** → выбрать репозиторий.
+2. Во вкладке **Variables** добавьте секреты (если нужны).
+3. Нажмите **Redeploy** (если добавляли переменные после билда).
+4. Проверяйте **Build/Runtime Logs**.
+
+> Если у вас уже есть собственная точка входа, поправьте команду в `composer.json`/`Procfile`.

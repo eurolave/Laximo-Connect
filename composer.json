@@ -3,7 +3,7 @@
   "description": "Tiny PHP microservice wrapping Laximo GuayaquilLib (CAT/DOC) for use from Node/Telegram bot",
   "type": "project",
   "require": {
-    "php": ">=7.1",
+    "php": "^8.2",
     "ext-soap": "*",
     "ext-simplexml": "*",
     "laximo/guayaquillib": "^3.0"
@@ -14,6 +14,6 @@
     }
   },
   "scripts": {
-    "start": "php -S 0.0.0.0:8080 -t public"
+    "start": "php -S 0.0.0.0:${PORT:-8080} -t public public/index.php"
   }
 }
