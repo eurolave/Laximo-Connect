@@ -1,0 +1,19 @@
+{
+  "name": "yourorg/laximo-php-microservice",
+  "description": "Tiny PHP microservice wrapping Laximo GuayaquilLib (CAT/DOC) for use from Node/Telegram bot",
+  "type": "project",
+  "require": {
+    "php": ">=7.1",
+    "ext-soap": "*",
+    "ext-simplexml": "*",
+    "laximo/guayaquillib": "^3.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "src/"
+    }
+  },
+  "scripts": {
+    "start": "php -S 0.0.0.0:8080 -t public"
+  }
+}
