@@ -118,6 +118,32 @@ if ($path === '/_diag/path') {
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     exit;
 }
+if ($path === '/_diag/scan') {
+    // показать все классы, которые выглядят "похожими"
+    $all = get_declared_classes();
+    $hits = array_values(array_filter($all, function($c) {
+        return stripos($c, 'oem') !== false || stripos($c, 'guayaquil') !== false;
+    }));
+
+    // попробуем разные варианты имён
+    $candidates = [
+        'ServiceOem', 'ServiceOEM',
+        'Oem', 'OEM',
+        'Guayaquil\ServiceOem', 'Guayaquil\ServiceOEM',
+        'Guayaquil\Oem', 'Guayaquil\OEM',
+    ];
+    $exists = [];
+    foreach ($candidates as $cand) {
+        $exists[$cand] = class_exists($cand) || class_exists('\\' . $cand);
+    }
+
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode([
+        'matches_in_declared_classes' => $hits,
+        'class_exists' => $exists,
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    exit;
+}
 
 // health
 if ($path === '/health') {
