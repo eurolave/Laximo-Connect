@@ -8,6 +8,39 @@ use App\GuayaquilClient;
 header('Content-Type: application/json; charset=utf-8');
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/';
 
+// ===== TEMP: диагностика Composer/классов =====
+if ($path === '/_diag') {
+    require __DIR__ . '/../vendor/autoload.php';
+    $data = [
+        'vendor_autoload' => file_exists(__DIR__ . '/../vendor/autoload.php'),
+        'ServiceOem_class' => class_exists('\ServiceOem'),
+        'Oem_class' => class_exists('\Oem'),
+        'composer_class' => class_exists('\Composer\InstalledVersions'),
+    ];
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+if ($path === '/_diag/packages') {
+    require __DIR__ . '/../vendor/autoload.php';
+    if (class_exists('\Composer\InstalledVersions')) {
+        $installed = \Composer\InstalledVersions::getInstalledPackages();
+        $hasGuayaquil = \Composer\InstalledVersions::isInstalled('laximo/guayaquillib');
+        $version = $hasGuayaquil ? \Composer\InstalledVersions::getPrettyVersion('laximo/guayaquillib') : null;
+        $data = [
+            'has_laximo_guayaquillib' => $hasGuayaquil,
+            'laximo_guayaquillib_version' => $version,
+            'packages_count' => count($installed),
+        ];
+    } else {
+        $data = ['error' => 'Composer\\InstalledVersions недоступен'];
+    }
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 // health
 if ($path === '/health') {
     echo json_encode(['ok' => true, 'php' => PHP_VERSION]);
