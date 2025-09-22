@@ -95,6 +95,26 @@ if ($path === '/_diag/path') {
         && \Composer\InstalledVersions::isInstalled('laximo/guayaquillib')) {
         $libPath = \Composer\InstalledVersions::getInstallPath('laximo/guayaquillib');
     }
+// GET /cat/findVehicle?vin=WAUZZZ43ZCA073933
+if ($path === '/cat/findVehicle') {
+    $vin = isset($_GET['vin']) ? trim((string)$_GET['vin']) : '';
+    if ($vin === '') {
+        http_response_code(400);
+        echo json_encode(['error' => 'vin query param is required'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+    try {
+        $result = $client->findVehicleByVin($vin);
+        echo json_encode($result, JSON_UNESCAPED_UNICODE);
+    } catch (Throwable $e) {
+        http_response_code(502);
+        echo json_encode([
+            'error' => 'Laximo error',
+            'message' => $e->getMessage()
+        ], JSON_UNESCAPED_UNICODE);
+    }
+    exit;
+}
 
     // Фолбэк на стандартный путь vendor/
     if (!$libPath) {
