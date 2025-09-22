@@ -13,25 +13,25 @@ final class GuayaquilClient
 
     public function __construct(string $login, string $password)
     {
-        $this->oem = new ServiceOem($login, $password);
+        $this->oem = new \ServiceOem($login, $password);
     }
 
     /** Пример: список доступных каталогов */
     public function listCatalogs(): array
     {
-        return $this->oem->listCatalogs();
+        return $this->\oem->listCatalogs();
     }
 
     /** Пример: информация по конкретному каталогу */
     public function getCatalogInfo(string $code): array
     {
-        return $this->oem->getCatalogInfo($code);
+        return $this->\oem->getCatalogInfo($code);
     }
 
     /** Пример батч-запроса: объединяем список + инфо по каталогу */
     public function catalogsWithInfo(string $code): array
     {
-        return $this->oem->queryButch([
+        return $this->\oem->queryButch([
             \Guayaquil\Oem::listCatalogs(),
             \Guayaquil\Oem::getCatalogInfo($code),
         ]);
