@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace App;
 
-use Guayaquil\ServiceOem;
-
 /**
  * Обёртка над laximo/guayaquillib для нашего микросервиса.
  * Требует переменные окружения LAXIMO_LOGIN и LAXIMO_PASSWORD (передаются извне).
