@@ -3,13 +3,23 @@ declare(strict_types=1);
 
 require __DIR__ . '/../vendor/autoload.php';
 
-// ---- bootstrap guayaquillib ----
+// ---- bootstrap guayaquillib (усиленный) ----
+$libPath = null;
 if (class_exists('\Composer\InstalledVersions')
     && \Composer\InstalledVersions::isInstalled('laximo/guayaquillib')) {
-
     $libPath = \Composer\InstalledVersions::getInstallPath('laximo/guayaquillib');
+}
 
-    // Попытка подключить «точку входа», если есть
+// fallback, если Composer не вернул путь
+if (!$libPath) {
+    $fallback = __DIR__ . '/../vendor/laximo/guayaquillib';
+    if (is_dir($fallback)) {
+        $libPath = $fallback;
+    }
+}
+
+if ($libPath) {
+    // 1) Попробовать «точки входа», если вдруг есть
     foreach (['/src/autoload.php', '/src/guayaquillib.php'] as $entry) {
         $p = $libPath . $entry;
         if (is_file($p)) {
@@ -17,7 +27,15 @@ if (class_exists('\Composer\InstalledVersions')
         }
     }
 
-    // Подстраховка: подгрузить все *.php из src/
+    // 2) Явно подключить ключевые файлы классов (чаще всего так называются)
+    foreach (['/src/ServiceOem.php', '/src/Oem.php', '/src/ServiceAm.php', '/src/Am.php'] as $entry) {
+        $p = $libPath . $entry;
+        if (is_file($p)) {
+            require_once $p;
+        }
+    }
+
+    // 3) Подстраховка: подключить все .php в src/
     $srcDir = $libPath . '/src';
     if (is_dir($srcDir)) {
         foreach (glob($srcDir . '/*.php') as $file) {
@@ -25,6 +43,8 @@ if (class_exists('\Composer\InstalledVersions')
         }
     }
 }
+// ---- end bootstrap --------------------------
+
 // -------------------------------------------------------------------
 
 
