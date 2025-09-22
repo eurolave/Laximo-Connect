@@ -3,24 +3,24 @@ declare(strict_types=1);
 
 require __DIR__ . '/../vendor/autoload.php';
 
-// ---- bootstrap guayaquillib (временный/постоянный, если нужно) ----
-if (class_exists('\Composer\InstalledVersions') &&
-    \Composer\InstalledVersions::isInstalled('laximo/guayaquillib')) {
+// ---- bootstrap guayaquillib ----
+if (class_exists('\Composer\InstalledVersions')
+    && \Composer\InstalledVersions::isInstalled('laximo/guayaquillib')) {
 
-    $lib = \Composer\InstalledVersions::getInstallPath('laximo/guayaquillib');
+    $libPath = \Composer\InstalledVersions::getInstallPath('laximo/guayaquillib');
 
-    // Попробуем типовые точки входа, если они есть
+    // Попытка подключить «точку входа», если есть
     foreach (['/src/autoload.php', '/src/guayaquillib.php'] as $entry) {
-        $p = $lib . $entry;
+        $p = $libPath . $entry;
         if (is_file($p)) {
             require_once $p;
         }
     }
 
-    // Подстраховка: подключаем все файлы из src/
-    $src = $lib . '/src';
-    if (is_dir($src)) {
-        foreach (glob($src . '/*.php') as $file) {
+    // Подстраховка: подгрузить все *.php из src/
+    $srcDir = $libPath . '/src';
+    if (is_dir($srcDir)) {
+        foreach (glob($srcDir . '/*.php') as $file) {
             require_once $file;
         }
     }
