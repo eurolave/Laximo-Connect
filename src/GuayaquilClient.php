@@ -5,17 +5,15 @@ namespace App;
 
 /**
  * Обёртка над laximo/guayaquillib.
- * ВНИМАНИЕ: классы SDK находятся в ГЛОБАЛЬНОМ пространстве имён: \ServiceOem, \Oem
+ * Классы SDK: \GuayaquilLib\ServiceOem и \GuayaquilLib\Oem
  */
 final class GuayaquilClient
 {
-    /** @var \ServiceOem */
-    private \ServiceOem $oem;
+    private \GuayaquilLib\ServiceOem $oem;
 
     public function __construct(string $login, string $password)
     {
-        // глобальный класс из guayaquillib
-        $this->oem = new \ServiceOem($login, $password);
+        $this->oem = new \GuayaquilLib\ServiceOem($login, $password);
     }
 
     /** Список доступных каталогов */
@@ -34,8 +32,8 @@ final class GuayaquilClient
     public function catalogsWithInfo(string $code): array
     {
         return $this->oem->queryButch([
-            \Oem::listCatalogs(),
-            \Oem::getCatalogInfo($code),
+            \GuayaquilLib\Oem::listCatalogs(),
+            \GuayaquilLib\Oem::getCatalogInfo($code),
         ]);
     }
 }
