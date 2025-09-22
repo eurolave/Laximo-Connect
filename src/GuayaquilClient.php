@@ -29,4 +29,11 @@ final class GuayaquilClient
             \GuayaquilLib\Oem::getCatalogInfo($code),
         ]);
     }
+
+    /** ▶ поиск авто по VIN */
+    public function findVehicleByVin(string $vin): array
+    {
+        // метод есть в SDK v3.x
+        return $this->oem->findVehicleByVin($vin);
+    }
 }
