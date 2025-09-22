@@ -61,6 +61,9 @@ if ($path === '/_diag') {
         'ServiceOem_class' => class_exists('\ServiceOem'),
         'Oem_class' => class_exists('\Oem'),
         'composer_class' => class_exists('\Composer\InstalledVersions'),
+        'GuayaquilLib_ServiceOem' => class_exists('\GuayaquilLib\ServiceOem'),
+        'GuayaquilLib_Oem'        => class_exists('\GuayaquilLib\Oem'),
+
     ];
     header('Content-Type: application/json; charset=utf-8');
     echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
