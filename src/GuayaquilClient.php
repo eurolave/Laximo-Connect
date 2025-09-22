@@ -34,8 +34,8 @@ final class GuayaquilClient
     public function catalogsWithInfo(string $code): array
     {
         return $this->oem->queryButch([
-            \\Guayaquil\\Oem::listCatalogs(),
-            \\Guayaquil\\Oem::getCatalogInfo($code),
+            \Guayaquil\Oem::listCatalogs(),
+            \Guayaquil\Oem::getCatalogInfo($code),
         ]);
     }
 }
