@@ -85,6 +85,39 @@ if ($path === '/_diag/packages') {
     echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     exit;
 }
+if ($path === '/_diag/path') {
+    // Попробуем получить путь пакета через Composer
+    $libPath = null;
+    if (class_exists('\Composer\InstalledVersions')
+        && \Composer\InstalledVersions::isInstalled('laximo/guayaquillib')) {
+        $libPath = \Composer\InstalledVersions::getInstallPath('laximo/guayaquillib');
+    }
+
+    // Фолбэк на стандартный путь vendor/
+    if (!$libPath) {
+        $fallback = __DIR__ . '/../vendor/laximo/guayaquillib';
+        if (is_dir($fallback)) {
+            $libPath = $fallback;
+        }
+    }
+
+    $srcDir = $libPath ? $libPath . '/src' : null;
+    $existsServiceOem = $srcDir ? file_exists($srcDir . '/ServiceOem.php') : null;
+    $existsOem       = $srcDir ? file_exists($srcDir . '/Oem.php') : null;
+    $filesInSrc      = ($srcDir && is_dir($srcDir)) ? glob($srcDir . '/*.php') : [];
+
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode([
+        'libPath'            => $libPath,
+        'srcDir'             => $srcDir,
+        'src_is_dir'         => (bool)($srcDir && is_dir($srcDir)),
+        'exists_ServiceOem'  => $existsServiceOem,
+        'exists_Oem'         => $existsOem,
+        'src_php_count'      => is_array($filesInSrc) ? count($filesInSrc) : 0,
+        'sample_files'       => array_slice(array_map('basename', $filesInSrc ?: []), 0, 10),
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    exit;
+}
 
 // health
 if ($path === '/health') {
