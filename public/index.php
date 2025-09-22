@@ -3,6 +3,31 @@ declare(strict_types=1);
 
 require __DIR__ . '/../vendor/autoload.php';
 
+// ---- bootstrap guayaquillib (временный/постоянный, если нужно) ----
+if (class_exists('\Composer\InstalledVersions') &&
+    \Composer\InstalledVersions::isInstalled('laximo/guayaquillib')) {
+
+    $lib = \Composer\InstalledVersions::getInstallPath('laximo/guayaquillib');
+
+    // Попробуем типовые точки входа, если они есть
+    foreach (['/src/autoload.php', '/src/guayaquillib.php'] as $entry) {
+        $p = $lib . $entry;
+        if (is_file($p)) {
+            require_once $p;
+        }
+    }
+
+    // Подстраховка: подключаем все файлы из src/
+    $src = $lib . '/src';
+    if (is_dir($src)) {
+        foreach (glob($src . '/*.php') as $file) {
+            require_once $file;
+        }
+    }
+}
+// -------------------------------------------------------------------
+
+
 use App\GuayaquilClient;
 
 header('Content-Type: application/json; charset=utf-8');
