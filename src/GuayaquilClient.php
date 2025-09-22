@@ -10,70 +10,102 @@ final class GuayaquilClient
     public function __construct(string $login, string $password)
     {
         $this->oem = new \GuayaquilLib\ServiceOem($login, $password);
+
+        // Жестко переопределяем хост, если задан в окружении
+        $host = getenv('LAXIMO_HOST') ?: 'https://ws.laximo.ru';
+        $this->forceHost($host);
     }
 
+    /** Список доступных каталогов */
     public function listCatalogs(): array
     {
-        error_log('[LAXIMO] listCatalogs() start');
-        $res = $this->oem->listCatalogs();
-        error_log('[LAXIMO] listCatalogs() done');
-        return $res;
+        return $this->oem->listCatalogs();
     }
 
+    /** Информация по конкретному каталогу */
     public function getCatalogInfo(string $code): array
     {
-        error_log("[LAXIMO] getCatalogInfo({$code}) start");
-        $res = $this->oem->getCatalogInfo($code);
-        error_log("[LAXIMO] getCatalogInfo({$code}) done");
-        return $res;
+        return $this->oem->getCatalogInfo($code);
     }
 
+    /** Пример батча */
     public function catalogsWithInfo(string $code): array
     {
-        error_log("[LAXIMO] catalogsWithInfo({$code}) start");
-        $res = $this->oem->queryButch([
+        return $this->oem->queryButch([
             \GuayaquilLib\Oem::listCatalogs(),
             \GuayaquilLib\Oem::getCatalogInfo($code),
         ]);
-        error_log("[LAXIMO] catalogsWithInfo({$code}) done");
-        return $res;
     }
 
-    /** Поиск авто по VIN + попытка показать конечную SOAP-точку */
+    /** Поиск авто по VIN */
     public function findVehicleByVin(string $vin): array
     {
-        error_log("[LAXIMO] findVehicleByVin({$vin}) start");
+        return $this->oem->findVehicleByVin($vin);
+    }
 
-        // 1) основной вызов
-        $res = $this->oem->findVehicleByVin($vin);
-
-        // 2) попробуем «подглядеть» URL у SoapClient через рефлексию
+    /**
+     * Насильно направляем SDK на нужный endpoint.
+     * Пытаемся: setHost()/setEndpoint()/setUrl(), свойство host/url/endpoint/baseUrl,
+     * и, если доступен SoapClient, дергаем __setLocation().
+     */
+    private function forceHost(string $host): void
+    {
         try {
-            $ref = new \ReflectionObject($this->oem);
-            foreach (['soap', 'client', 'soapClient'] as $propName) {
-                if ($ref->hasProperty($propName)) {
-                    $prop = $ref->getProperty($propName);
-                    $prop->setAccessible(true);
-                    $soap = $prop->getValue($this->oem);
-                    if ($soap instanceof \SoapClient) {
-                        // __getLastRequestHeaders может содержать Host/Action/Endpoint
-                        $headers = @$soap->__getLastRequestHeaders() ?: '';
-                        $lastReq = @$soap->__getLastRequest() ?: '';
-                        $lastRes = @$soap->__getLastResponse() ?: '';
-                        // В заголовках обычно виден реальный URL/Host
-                        error_log("[LAXIMO][SOAP headers]\n" . substr($headers, 0, 1000));
-                        // По желанию можно логировать и тело запроса/ответа (осторожно с объёмом/секретами!)
-                        // error_log("[LAXIMO][SOAP request]\n" . substr($lastReq, 0, 2000));
-                        // error_log("[LAXIMO][SOAP response]\n" . substr($lastRes, 0, 2000));
-                        break;
+            $oemRef = new \ReflectionObject($this->oem);
+
+            // 1) Попробуем явные сеттеры на объекте ServiceOem
+            foreach (['setHost','setEndpoint','setUrl'] as $m) {
+                if ($oemRef->hasMethod($m)) {
+                    $oemRef->getMethod($m)->invoke($this->oem, $host);
+                    return;
+                }
+            }
+
+            // 2) Полезем во внутренности (обертка SOAP)
+            $soapWrapper = null;
+            foreach (['soap','client','soapClient','wrapper'] as $propName) {
+                if ($oemRef->hasProperty($propName)) {
+                    $p = $oemRef->getProperty($propName);
+                    $p->setAccessible(true);
+                    $soapWrapper = $p->getValue($this->oem);
+                    if ($soapWrapper) break;
+                }
+            }
+
+            if ($soapWrapper) {
+                $wRef = new \ReflectionObject($soapWrapper);
+
+                // 2a) Сеттеры в обертке
+                foreach (['setHost','setEndpoint','setUrl'] as $m) {
+                    if ($wRef->hasMethod($m)) {
+                        $wRef->getMethod($m)->invoke($soapWrapper, $host);
+                    }
+                }
+                // 2b) Популярные поля-хранилища URL
+                foreach (['host','url','endpoint','baseUrl'] as $pn) {
+                    if ($wRef->hasProperty($pn)) {
+                        $pp = $wRef->getProperty($pn);
+                        $pp->setAccessible(true);
+                        $pp->setValue($soapWrapper, $host);
+                    }
+                }
+
+                // 2c) Достанем сам SoapClient и выставим location
+                foreach (['soap','client','soapClient'] as $pn) {
+                    if ($wRef->hasProperty($pn)) {
+                        $pp = $wRef->getProperty($pn);
+                        $pp->setAccessible(true);
+                        $sc = $pp->getValue($soapWrapper);
+                        if ($sc instanceof \SoapClient) {
+                            // Попытка насильно сменить endpoint
+                            try { @$sc->__setLocation($host); } catch (\Throwable $e) {}
+                        }
                     }
                 }
             }
-        } catch (\Throwable $t) {
-            error_log('[LAXIMO][TRACE-ERR] ' . $t->getMessage());
+        } catch (\Throwable $e) {
+            // Молча игнорируем — если что, просто останется дефолтный хост библиотеки
+            error_log('[LAXIMO][forceHost] ' . $e->getMessage());
         }
-
-        error_log("[LAXIMO] findVehicleByVin({$vin}) done");
-        return $res;
     }
 }
